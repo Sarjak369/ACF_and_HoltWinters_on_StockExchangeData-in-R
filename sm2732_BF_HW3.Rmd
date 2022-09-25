@@ -1,0 +1,136 @@
+---
+title: "sm2732_BF_HW3"
+output: html_document
+date: "2022-09-23"
+---
+
+
+```{r}
+# Business Forecasting HW3
+# Name - Sarjak Atul Maniar
+# Email - sm2732@scarletmail.rutgers.edu
+
+
+library(fpp2)
+library(forecast)
+
+data()  # to see all the datasets available in fpp2
+data(boston) # picking up the boston dataset
+
+# Describing the dataset and seeing various functions associated with it..
+# Monthly dollar volume of sales on Boston stock exchange and combined New York and American
+# stock exchange. January 1967 – November 1969.
+
+class(boston) # "mts" "ts"  (this shows the class of our data, it is "multiple time series" and "time series")
+
+start(boston) # this tells you that the data series is in a time series format
+#This is the start of the time series
+
+end(boston)
+#This is the end of the time series
+
+frequency(boston) # The cycle of this time series is 12 months in a year
+
+summary(boston)
+
+dim(boston) # [1] 35  2   i.e 35 rows and 2 columns
+
+colnames(boston)  # [1] "nyase" "bse"  
+
+plot(boston)
+
+nrow(boston) # 35
+ncol(boston) # 2
+
+plot(aggregate(boston)) # This will aggregate the cycles and display a year on year trend
+
+boxplot(boston~cycle(boston)) # Box plot across months
+
+plot(boston[,"nyase"])
+
+plot(boston[,"bse"])
+
+# Autocorrelation represents the degree of similarity between a given time series and a lagged version of itself over successive time intervals.
+# Autocorrelation measures the relationship between a variable's current value and its past values.
+# An autocorrelation of +1 represents a perfect positive correlation, while an autocorrelation of negative 1 represents a perfect negative correlation.
+# Autocorrelation can also be referred to as lagged correlation or serial correlation, as it measures the relationship between a variable's current value and its past values.
+
+Acf(boston)
+
+Acf(boston[,"nyase"])
+# Notice how the coefficient is high at lag 1, 5,14,15. In terms of the month if I have to say then, high positive correlations for January and May, whereas February and March have negative correlations.
+# We will focus on the points that lie beyond the blue region as they signify strong statistical significance.
+
+Acf(boston[,"bse"])
+# Again, we can get infer same things from this plot too and focus on the points that lie beyond the blue region as they signify strong statistical significance.
+
+
+# The autocorrelation plot for Monthly dollar volume of sales on Boston stock exchange and combined New York and American stock exchange. January 1967 – November 1969. that some values are not statistically significant and some of them are significant. This indicates that the values are not highly correlated, as we can see from the graph plot.
+
+# In our ACF plot, each bar (line) represents the size and direction of the correlation. Bars that extend across the blue line are statistically significant.
+
+# From the ACF, we can assess the randomness and stationarity of a time series. We can also determine whether trends and seasonal patterns are present.
+# From our output, we can see that there is randomness and trends are not present.
+
+# Now, let us find the autocorrelation values for both the columns from our ACF plot 
+Autocorrelation_bse <- acf(boston[,"bse"],plot=FALSE)
+Autocorrelation_bse
+
+Autocorrelation_nyase <- acf(boston[,"nyase"],plot=FALSE)
+Autocorrelation_nyase
+
+# I took the whole data because there are only 35 rows and 2 columns in the dataset. 
+
+# Residuals
+
+df.ts_bse <- ts((boston[,"bse"]), frequency = 12, start = c(1967,1))
+df.ts_bse
+plot.ts(df.ts_bse,main = "Timeseries", col = "blue")
+
+df.ts_nyase <- ts((boston[,"bse"]), frequency = 12, start = c(1967,1))
+df.ts_nyase
+plot.ts(df.ts_nyase,main = "Timeseries", col = "blue")
+
+
+# We can “decompose” the time series — which in this case means separating out the 4 main components that make up the time series:
+# trend: the long-term trends in the data
+# seasonal: the repeated seasonal signal adder
+# random: the “left-over” components that aren’t expected from the seasonality or trend components.
+# observed: the real values in the data
+
+df_decompose_bse <- decompose(df.ts_bse, type = "additive")
+df_decompose_nyase <- decompose(df.ts_nyase, type = "additive")
+
+# Notice how I chose additive instead of multiplicative since there is no exponential increase in the amplitudes over time.
+
+plot(df_decompose_bse)
+plot(df_decompose_nyase)
+
+# HoltWinters
+# Holt-Winters forecasting is a way to model and predict the behavior of a sequence of values over time—a time series.
+
+tmp1 <- HoltWinters(df.ts_bse)
+tmp2 <- HoltWinters(df.ts_nyase)
+attributes(tmp1)
+attributes(tmp2)
+
+plot(tmp1)
+plot(tmp2)
+
+# black line is the actual data and red line is the HoltWinters.. 
+# We can see that the data fits for sometime and then it deviates little bit from the actual data...
+
+
+tmp_f <- forecast(tmp1)
+attributes(tmp_f)
+plot(tmp_f$residuals)
+plot(hist(tmp_f$residuals))
+Acf(tmp_f$residuals)
+accuracy(tmp_f)
+
+
+
+
+
+```
+
